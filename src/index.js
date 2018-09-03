@@ -98,7 +98,7 @@ function makeRequest(isRefresh) {
 
 export default function start(config) {
   clientId = config.clientId;
-  redirectUri = config.redirectUri || `http://${window.location.hostname}`;
+  redirectUri = config.redirectUri || `${window.location.protocol}://${window.location.hostname}`;
   onNewToken = config.onNewToken;
   timeRemainingTimeout = config.timeRemainingTimeout || 90;
   if (refreshTokenStr) {

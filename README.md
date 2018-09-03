@@ -1,61 +1,33 @@
-# Podchatweb
-> Podchatweb is a web app built by react for handling POD chating use cases
+# Podauth
+> Podauth handle async pod auth actions
 
-[![Preview of Podchat web][preview_image]][preview_image_url]
-
-## Development
+## Build
 
 ```bash
-npm run start
+npm run build
 ```
 
 ## Installation
 
 ```
-npm install podchatweb --save
+npm install podauth --save
 ```
 
 ## Usage
 
 React component:
 
-```jsx
-import {PodchatReact} from "podchatweb"
-
-class MyApp extends Component {
-    render() {
-        const {token} = this.props;
-        return 
-        <div>
-            <PodchatReact token={token} onTokenExpire={callBack => {callBack(token)}}/>
-        </div>
-    }
-}
 ```
+import podauth from "podauth"
 
-Programmatic calling:
-
-```jsx
-import {Podchat} from "podchatweb"
-
-class MyApp extends Component {
-
-    componentDidMount() {
-        const {token} = this.props;
-        Podchat({token, onTokenExpire: callBack=> callBack(token)}, "myChat")
+podauth.start({
+    clientId: "aja73hq234hsflksfgsiuaevjtl",
+    onNewToken: (token) => {
+        //Do your stuff
     }
-    
-    render() {
-        return <div id="myChat"/>
-    }
-}
+})
 ```
 
 ## License
 
 This project is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
-
-
-[//]: # (LINKS)
-[preview_image]: https://raw.githubusercontent.com/ACT1GMR/podchatweb/master/docs/preview.png "Preview of podchat web"
-[preview_image_url]: https://raw.githubusercontent.com/ACT1GMR/podchatweb/master/docs/preview.png
