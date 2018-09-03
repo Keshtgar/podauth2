@@ -18,9 +18,9 @@ npm install podauth --save
 React component:
 
 ```jsx harmony
-import podauth from "podauth"
+import {auth} from "podauth"
 
-podauth.start({
+auth({
     clientId: "aja73hq234hsflksfgsiuaevjtl",
     redirectUri: "https://example.com",//Default {protocol}://{domain} of current url
     timeRemainingTimeout: 90,//Remaining time before expiration to refresh token, Default 90 seconds before expiration
