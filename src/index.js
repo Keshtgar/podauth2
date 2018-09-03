@@ -96,7 +96,7 @@ function makeRequest(isRefresh) {
 }
 
 
-export default function start(config) {
+function auth(config) {
   clientId = config.clientId;
   redirectUri = config.redirectUri || `${window.location.protocol}://${window.location.hostname}`;
   onNewToken = config.onNewToken;
@@ -106,3 +106,5 @@ export default function start(config) {
   }
   return generateToken().then(onNewToken);
 }
+
+export {auth};
