@@ -1,4 +1,5 @@
 const path = require("path");
+const HtmlWebPackPlugin = require("html-webpack-plugin");
 
 module.exports = (e, argv) => {
   const mode = argv.mode;
@@ -8,14 +9,20 @@ module.exports = (e, argv) => {
         {
           test: /\.js$/,
           include: [
-            path.resolve(__dirname, "index.js")
+            path.resolve(__dirname, "src")
           ],
           use: {
             loader: "babel-loader"
           }
         }
       ]
-    }
+    },
+    plugins: [
+      new HtmlWebPackPlugin({
+        template: "./index.html",
+        filename: "./index.html"
+      })
+    ],
   };
 
   //IF MODE IS PRODUCTION
@@ -25,11 +32,10 @@ module.exports = (e, argv) => {
       filename: "index.js",
       library: "",
       libraryTarget: "commonjs"
-    }
+    };
+    base.entry="./src/auth";
   } else {
     base.devtool = "source-map";
-    base.entry="./src/dev"
   }
-
   return base;
 };
