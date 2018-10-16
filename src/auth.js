@@ -20,7 +20,7 @@ const defaultConfig = {
   redirectUri: `${window.location.protocol}//${window.location.hostname}`,
   timeRemainingTimeout: 90,
   ssoBaseUrl: "https://accounts.pod.land/oauth2",
-  scope: "social"
+  scope: "profile"
 };
 let authConfig = {};
 

@@ -25,6 +25,7 @@ auth({
     redirectUri: "https://example.com",//Default {protocol}://{domain} of current url
     timeRemainingTimeout: 90,//Remaining time before expiration to refresh token, Default 90 seconds before expiration
     retryTimeout: 3000,//retry timeout after a fail catch
+    scope: "profile",//Login scope: profile|email|address|activity|legal،|phone
     onRetry(retry){
       //will fire when getting toke failed or canceled {retry} is custom retry function
     },
