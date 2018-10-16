@@ -20,12 +20,13 @@ const defaultConfig = {
   redirectUri: `${window.location.protocol}//${window.location.hostname}`,
   timeRemainingTimeout: 90,
   ssoBaseUrl: "https://accounts.pod.land/oauth2",
+  scope: "social"
 };
 let authConfig = {};
 
 function urlGenerator() {
-  const {ssoBaseUrl, clientId, redirectUri, codeChallengeStr} = authConfig;
-  return `${ssoBaseUrl}/authorize/index.html?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&code_challenge_method=S256&code_challenge=${codeChallengeStr}`;
+  const {ssoBaseUrl, clientId, redirectUri, codeChallengeStr, scope} = authConfig;
+  return `${ssoBaseUrl}/authorize/index.html?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&code_challenge_method=S256&code_challenge=${codeChallengeStr}&scope=${scope}`;
 }
 
 function codeVerifier() {
