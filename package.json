@@ -1,6 +1,6 @@
 {
   "name": "podauth",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Podauth handle async pod auth actions",
   "main": "dist/index.js",
   "repository": {
