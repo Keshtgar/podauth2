@@ -20,7 +20,8 @@ const defaultConfig = {
   redirectUri: `${window.location.protocol}//${window.location.hostname}`,
   timeRemainingTimeout: 90,
   ssoBaseUrl: "https://accounts.pod.land/oauth2",
-  scope: "profile"
+  scope: "profile",
+  redirectTrigger: null,
 };
 let authConfig = {};
 
@@ -47,7 +48,7 @@ function codeChallenge() {
 }
 
 function generateToken(forceLoginPage) {
-  const {timeRemainingTimeout, onError} = authConfig;
+  const {timeRemainingTimeout, onError, redirectTrigger} = authConfig;
   return new Promise((resolve, reject) => {
     const parsedQueryParam = queryString.parse(location.search);
     const code = parsedQueryParam.code;
@@ -55,7 +56,13 @@ function generateToken(forceLoginPage) {
       reset();
       codeVerifier();
       codeChallenge();
-      location.href = urlGenerator();
+      if (redirectTrigger) {
+        if (redirectTrigger()) {
+          location.href = urlGenerator();
+        }
+      } else {
+        location.href = urlGenerator();
+      }
       return;
     }
     makeRequest().then(response => {
@@ -104,6 +111,21 @@ function reset() {
   cookie.remove("refreshToken");
 }
 
+function signOut(config) {
+  authConfig = {...defaultConfig, ...window._podAuthConfig};
+  const {redirectTrigger} = authConfig;
+  reset();
+  codeVerifier();
+  codeChallenge();
+  if (redirectTrigger) {
+    if (redirectTrigger()) {
+      location.href = urlGenerator();
+    }
+  } else {
+    location.href = urlGenerator();
+  }
+}
+
 function makeRequest(isRefresh) {
   const {codeVerifierStr, clientId, refreshTokenStr, redirectUri, ssoBaseUrl} = authConfig;
   return new Promise((resolve, reject) => {
@@ -143,6 +165,7 @@ function makeRequest(isRefresh) {
 }
 
 function retry(isRefresh, force) {
+  authConfig = {...defaultConfig, ...window._podAuthConfig};
   const {retryTimeout, onRetry} = authConfig;
   if (force) {
     return makeRequest(isRefresh);
@@ -155,6 +178,9 @@ function retry(isRefresh, force) {
 
 
 function auth(config) {
+  if(config){
+    window._podAuthConfig = config;
+  }
   authConfig = {...defaultConfig, ...config};
   const {refreshTokenStr, onNewToken, codeVerifierStr} = authConfig;
   if (refreshTokenStr && codeVerifierStr) {
@@ -163,4 +189,4 @@ function auth(config) {
   return generateToken().then(onNewToken);
 }
 
-export {auth};
+export {auth, signOut, retry};
