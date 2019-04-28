@@ -1,4 +1,4 @@
-import {auth} from "./auth";
+import {auth, signOut} from "./auth";
 
 auth({
   clientId: "2051121e4348af52664cf7de0bda",
@@ -8,3 +8,7 @@ auth({
     document.getElementById("app").innerHTML = token
   }
 });
+
+document.getElementById("sign-out").onclick=function () {
+  signOut();
+};

@@ -31,19 +31,12 @@ function urlGenerator() {
 }
 
 function codeVerifier() {
-  const codeVerifierStr = authConfig.codeVerifierStr;
-  if (codeVerifierStr) {
-    return codeVerifierStr;
-  }
   const codeVerifierStrRand = randomString({length: 10});
   cookie.set("codeVerifier", authConfig.codeVerifierStr = codeVerifierStrRand);
 }
 
 function codeChallenge() {
-  const {codeChallengeStr, codeVerifierStr} = authConfig;
-  if (codeChallengeStr) {
-    return codeChallengeStr;
-  }
+  const {codeVerifierStr} = authConfig;
   return authConfig.codeChallengeStr = new Hashes.SHA256().b64(codeVerifierStr).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=+$/, "");
 }
 
@@ -107,7 +100,6 @@ function onTokenExpire(timout) {
 }
 
 function reset() {
-  cookie.remove("codeVerifier");
   cookie.remove("refreshToken");
 }
 
@@ -119,7 +111,7 @@ function signOut(config) {
   codeChallenge();
   if (redirectTrigger) {
     if (redirectTrigger()) {
-      location.href = urlGenerator();
+      location.href = generateToken(true);
     }
   } else {
     location.href = urlGenerator();
@@ -182,8 +174,8 @@ function auth(config) {
     window._podAuthConfig = config;
   }
   authConfig = {...defaultConfig, ...config};
-  const {refreshTokenStr, onNewToken, codeVerifierStr} = authConfig;
-  if (refreshTokenStr && codeVerifierStr) {
+  const {refreshTokenStr, onNewToken} = authConfig;
+  if (refreshTokenStr) {
     return refreshToken().then(onNewToken);
   }
   return generateToken().then(onNewToken);
