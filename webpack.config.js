@@ -4,6 +4,11 @@ const HtmlWebPackPlugin = require("html-webpack-plugin");
 module.exports = (e, argv) => {
   const mode = argv.mode;
   let base = {
+    devServer: {
+      compress: true,
+      public: "chat.fanapsoft.ir",
+      historyApiFallback: true
+    },
     module: {
       rules: [
         {
