@@ -3,16 +3,14 @@ import randomString from "random-string";
 import queryString from "query-string";
 import cookie from "js-cookie";
 
-
 const defaultConfig = () => {
   return {
-    onError: e => {
+    onError: (e) => {
       return false;
     },
-    onNewToken: e => {
-    },
-    onRetrying: e => {
-    },
+    onNewToken: (e) => {},
+    onRetrying: (e) => {},
+    onBanUser: (e) => {},
     codeVerifierStr: cookie.get("codeVerifier"),
     codeChallengeStr: null,
     retryTimeout: 3000,
@@ -24,8 +22,8 @@ const defaultConfig = () => {
     ssoBaseUrl: "https://accounts.pod.ir/oauth2",
     scope: "profile",
     redirectTrigger: null,
-    secure: false
-  }
+    secure: false,
+  };
 };
 let authConfig = {};
 let retryTimeoutCode;
@@ -33,18 +31,28 @@ let requestXHR;
 let tokenExpireTimeoutCode;
 
 function urlGenerator() {
-  const {ssoBaseUrl, clientId, redirectUri, codeChallengeStr, scope} = authConfig;
+  const { ssoBaseUrl, clientId, redirectUri, codeChallengeStr, scope } =
+    authConfig;
   return `${ssoBaseUrl}/authorize/index.html?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&code_challenge_method=S256&code_challenge=${codeChallengeStr}&scope=${scope}`;
 }
 
 function codeVerifier() {
-  const codeVerifierStrRand = authConfig.codeVerifierStr || randomString({length: 10});
-  cookie.set("codeVerifier", authConfig.codeVerifierStr = codeVerifierStrRand, {expires: authConfig.cookieTimeout, secure: authConfig.secure});
+  const codeVerifierStrRand =
+    authConfig.codeVerifierStr || randomString({ length: 10 });
+  cookie.set(
+    "codeVerifier",
+    (authConfig.codeVerifierStr = codeVerifierStrRand),
+    { expires: authConfig.cookieTimeout, secure: authConfig.secure }
+  );
 }
 
 function codeChallenge() {
-  const {codeVerifierStr} = authConfig;
-  return authConfig.codeChallengeStr = new Hashes.SHA256().b64(codeVerifierStr).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=+$/, "");
+  const { codeVerifierStr } = authConfig;
+  return (authConfig.codeChallengeStr = new Hashes.SHA256()
+    .b64(codeVerifierStr)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/\=+$/, ""));
 }
 
 function checkForLoginPageScenario(error) {
@@ -54,7 +62,7 @@ function checkForLoginPageScenario(error) {
 }
 
 function _refreshAndGenerateTokenErrorHandling(error) {
-  const {onError, retryTimeout, onRetrying} = authConfig;
+  const { onError, retryTimeout, onRetrying } = authConfig;
   if (onError(error) || checkForLoginPageScenario(error)) {
     reset();
     generateToken(true);
@@ -70,19 +78,43 @@ function _refreshAndGenerateTokenErrorHandling(error) {
     onRetrying();
   }
   clearTimeout(retryTimeoutCode);
-  retryTimeoutCode = setTimeout(() => auth(window._podAuthConfig), retryTimeout);
+  retryTimeoutCode = setTimeout(
+    () => auth(window._podAuthConfig),
+    retryTimeout
+  );
 }
 
 function _refreshAndGenerateTokenSuccessHandling(resolve, response) {
-  const {timeRemainingTimeout} = authConfig;
+  const { timeRemainingTimeout } = authConfig;
   cookie.remove("refreshToken");
-  cookie.set("refreshToken", authConfig.refreshTokenStr = response.refresh_token, {expires: authConfig.cookieTimeout, secure: authConfig.secure});
+  cookie.remove("accessToken");
+  cookie.remove("tokenExpireTime");
+  cookie.set(
+    "refreshToken",
+    (authConfig.refreshTokenStr = response.refresh_token),
+    { expires: authConfig.cookieTimeout, secure: authConfig.secure }
+  );
+
+  cookie.set("accessToken", response.access_token, {
+    expires: authConfig.cookieTimeout,
+    secure: authConfig.secure,
+  });
+
+  cookie.set(
+    "tokenExpireTime",
+    Date.now() + (response.expires_in - timeRemainingTimeout) * 1000,
+    {
+      expires: authConfig.cookieTimeout,
+      secure: authConfig.secure,
+    }
+  );
+
   onTokenExpire((response.expires_in - timeRemainingTimeout) * 1000);
   resolve(response.access_token);
 }
 
 function generateToken(forceLoginPage) {
-  const {redirectTrigger, onError} = authConfig;
+  const { redirectTrigger, onError } = authConfig;
   return new Promise((resolve, reject) => {
     const parsedQueryParam = queryString.parse(location.search);
     const code = parsedQueryParam.code;
@@ -99,23 +131,29 @@ function generateToken(forceLoginPage) {
       }
       return;
     }
-    makeRequest().then(_refreshAndGenerateTokenSuccessHandling.bind(null, resolve), e => {
-      reset();
-      generateToken(true);
-    });
+    makeRequest().then(
+      _refreshAndGenerateTokenSuccessHandling.bind(null, resolve),
+      (e) => {
+        reset();
+        generateToken(true);
+      }
+    );
   });
 }
 
 function refreshToken() {
   return new Promise((resolve, reject) => {
-    makeRequest(true).then(_refreshAndGenerateTokenSuccessHandling.bind(null, resolve), _refreshAndGenerateTokenErrorHandling);
+    makeRequest(true).then(
+      _refreshAndGenerateTokenSuccessHandling.bind(null, resolve),
+      _refreshAndGenerateTokenErrorHandling
+    );
   });
 }
 
 function onTokenExpire(timout) {
-  const {onError, onNewToken} = authConfig;
+  const { onError, onNewToken } = authConfig;
   clearTimeout(tokenExpireTimeoutCode);
-  tokenExpireTimeoutCode = setTimeout(e => {
+  tokenExpireTimeoutCode = setTimeout((e) => {
     refreshToken().then(onNewToken, _refreshAndGenerateTokenErrorHandling);
   }, timout);
 }
@@ -126,31 +164,41 @@ function reset() {
 }
 
 function signOut() {
-  authConfig = {...defaultConfig(), ...window._podAuthConfig};
+  authConfig = { ...defaultConfig(), ...window._podAuthConfig };
   reset();
   generateToken(true);
 }
 
 function makeRequest(isRefresh) {
-  const {codeVerifierStr, clientId, refreshTokenStr, redirectUri, ssoBaseUrl} = authConfig;
+  const {
+    codeVerifierStr,
+    clientId,
+    refreshTokenStr,
+    redirectUri,
+    ssoBaseUrl,
+  } = authConfig;
+
   return new Promise((resolve, reject) => {
     requestXHR = new XMLHttpRequest();
     requestXHR.open("POST", `${ssoBaseUrl}/token`, true);
     let baseObject = {
       grant_type: isRefresh ? "refresh_token" : "authorization_code",
       client_id: clientId,
-      code_verifier: codeVerifierStr
+      code_verifier: codeVerifierStr,
     };
 
     if (isRefresh) {
-      baseObject = {...baseObject, ...{refresh_token: refreshTokenStr}};
+      baseObject = { ...baseObject, ...{ refresh_token: refreshTokenStr } };
     } else {
       const parsedQueryParam = queryString.parse(location.search);
       const code = parsedQueryParam.code;
-      baseObject = {...baseObject, ...{redirect_uri: redirectUri, code}};
+      baseObject = { ...baseObject, ...{ redirect_uri: redirectUri, code } };
     }
 
-    requestXHR.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    requestXHR.setRequestHeader(
+      "Content-Type",
+      "application/x-www-form-urlencoded"
+    );
 
     requestXHR.onreadystatechange = function (e) {
       if (this.readyState === XMLHttpRequest.DONE) {
@@ -158,7 +206,12 @@ function makeRequest(isRefresh) {
           if (this.status === 200) {
             return resolve(JSON.parse(requestXHR.response));
           }
-          reject(JSON.parse(requestXHR.response));
+
+          if (requestXHR.response) {
+            reject(JSON.parse(requestXHR.response));
+          } else {
+            reject("connection error");
+          }
         }
       }
     };
@@ -167,7 +220,7 @@ function makeRequest(isRefresh) {
 }
 
 function retry() {
-  const {onRetrying} = authConfig;
+  const { onRetrying } = authConfig;
   if (requestXHR) {
     requestXHR.abort();
     requestXHR = null;
@@ -178,21 +231,37 @@ function retry() {
   return auth(window._podAuthConfig);
 }
 
+function getTokenFromCookies() {
+  return new Promise((resolve, reject) => {
+    const accessToken = cookie.get("accessToken");
+    resolve(accessToken);
+  });
+}
 
 function auth(config) {
+  const expireTime = cookie.get("tokenExpireTime");
+  const accessToken = cookie.get("accessToken");
   if (config) {
     window._podAuthConfig = config;
   }
-  authConfig = {...defaultConfig(), ...config};
-  const {refreshTokenStr, onNewToken} = authConfig;
+  authConfig = { ...defaultConfig(), ...config };
+  const { refreshTokenStr, onNewToken } = authConfig;
+
+  if (expireTime && accessToken && expireTime > Date.now()) {
+    const then = getTokenFromCookies();
+    then.then(onNewToken);
+    return then;
+  }
+
   if (refreshTokenStr) {
     const then = refreshToken();
     then.then(onNewToken);
     return then;
   }
+
   const then = generateToken();
   then.then(onNewToken);
   return then;
 }
 
-export {auth, signOut, retry};
+export { auth, signOut, retry };
