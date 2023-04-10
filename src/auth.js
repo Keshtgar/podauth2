@@ -159,8 +159,10 @@ function onTokenExpire(timout) {
 }
 
 function reset() {
+  cookie.remove("accessToken");
   cookie.remove("refreshToken");
   cookie.remove("codeVerifier");
+  cookie.remove("tokenExpireTime");
 }
 
 function signOut() {
