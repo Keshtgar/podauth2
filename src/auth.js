@@ -91,11 +91,11 @@ function _refreshAndGenerateTokenSuccessHandling(resolve, response) {
   cookie.remove("tokenExpireTime");
   cookie.set(
     "refreshToken",
-    (authConfig.refreshTokenStr = response.refresh_token),
+    (authConfig.refreshTokenStr = response.refresh_token || "" ),
     { expires: authConfig.cookieTimeout, secure: authConfig.secure }
   );
 
-  cookie.set("accessToken", response.access_token, {
+  cookie.set("accessToken", response.access_token || "", {
     expires: authConfig.cookieTimeout,
     secure: authConfig.secure,
   });
@@ -205,6 +205,9 @@ function makeRequest(isRefresh) {
     requestXHR.onreadystatechange = function (e) {
       if (this.readyState === XMLHttpRequest.DONE) {
         if (requestXHR.readyState === 4) {
+          if (this.status === 401) {
+            signOut();
+          }
           if (this.status === 200) {
             return resolve(JSON.parse(requestXHR.response));
           }
